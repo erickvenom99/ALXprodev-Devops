@@ -8,11 +8,29 @@ cat "$INPUT_FILE" | \
   jq -r '"\(.name) \(.types[0].type.name) \(.weight) \(.height)"' | \
   sed 's/^\([a-z]\)/\U\1/' | \
   awk '
-  {
-    formatted_weight = $3 / 10
-    formatted_height = $4 / 10
-    type_case = toupper(substr($2,1,1)) substr($2,2)
-    # FIX: Changed %g (general format) to %.1f (one decimal place) for weight
-    printf("%s is of type %s, weighs %dkg, and is %.1fm tall.\n", 
-      $1, type_case, formatted_weight, formatted_height)
-  }'
+   {
+        # --- Assign Positional Fields to Descriptive Variables ---
+        name = $1;
+        raw_type = $2;
+        raw_weight = $3;
+        raw_height = $4;
+        
+        # --- Calculations and Formatting ---
+        
+        # Convert hectograms (hg) to kilograms (kg)
+        formatted_weight = raw_weight / 10;
+        
+        # Convert decimeters (dm) to meters (m)
+        formatted_height = raw_height / 10;
+        
+        # Capitalize the first letter of the type (e.g., 'grass' -> 'Grass')
+        type_case = toupper(substr(raw_type, 1, 1)) substr(raw_type, 2);
+        
+        # --- Print the Human-Readable Output ---
+        # Using %g for weight (gets rid of .0) and %.1f for height
+        printf("%s is of type %s, weighs %gkg, and is %.1fm tall.\n", 
+            name, 
+            type_case, 
+            formatted_weight, 
+            formatted_height);
+    }'
