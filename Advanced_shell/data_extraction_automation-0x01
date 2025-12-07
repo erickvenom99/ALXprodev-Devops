@@ -12,6 +12,6 @@ cat "$INPUT_FILE" | \
         formatted_weight = $3 / 10
         formatted_height = $4 / 10
         type_case = toupper(substr($2,1,1)) substr($2,2)
-        printf("%s is of type %s, weighs %gkg, and is %.1fm tall.\n", 
+        printf("%s is of type %s, weighs %.1fkg, and is %.1fm tall.\n", 
             $1, type_case, formatted_weight, formatted_height)
     }'
