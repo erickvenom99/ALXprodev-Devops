@@ -1,0 +1,17 @@
+#!/bin/bash
+
+# Define the input file created in Task 0
+INPUT_FILE="data.json"
+
+# --- The jq | sed | awk Pipeline ---
+cat "$INPUT_FILE" | \
+    jq -r '"\(.name) \(.types[0].type.name) \(.weight) \(.height)"' | \
+    sed 's/^\([a-z]\)/\U\1/' | \
+    awk '
+    {
+        pokeman_weight = $3 / 10
+        pokeman_height = $4 / 10
+        type_case = toupper(substr($2,1,1)) substr($2,2)
+        printf("%s is of type %s, weighs %gkg, and is %.1fm tall.\n", 
+            $1, type_case, pokeman_weight, pokeman_height)
+    }'

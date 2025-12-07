@@ -1,0 +1,46 @@
+#!/bin/bash
+
+POKEMON_LIST=(Bulbasaur Ivysaur Venusaur Charmander Charmeleon)
+BASE_API_URL="https://pokeapi.co/api/v2/pokemon/"
+ERROR_FILE="errors.txt"
+REQUEST_DELAY=1
+
+echo "Starting data retrieval for ${#POKEMON_LIST[@]} Pokémon..."
+echo
+
+for POKEMON in "${POKEMON_LIST[@]}"; do
+    LOWER_POKEMON=$(echo "$POKEMON" | tr '[:upper:]' '[:lower:]')
+    CURRENT_URL="${BASE_API_URL}${LOWER_POKEMON}"
+    OUTPUT_FILE="${LOWER_POKEMON}.json"
+
+    echo "Fetching data for $POKEMON...."
+
+    # Get HTTP status code + response body in one curl call
+    RESPONSE=$(curl -sS -w "%{http_code}" "$CURRENT_URL")
+    HTTP_CODE=${RESPONSE: -3}
+    JSON_BODY=${RESPONSE%???}   # Remove last 3 chars (the HTTP code)
+
+    if [ "$HTTP_CODE" -eq 200 ]; then
+        echo "$JSON_BODY" > "$OUTPUT_FILE"
+        echo "Saved data to pokemon_data/$OUTPUT_FILE"
+    
+    elif [ "$HTTP_CODE" -eq 404 ]; then
+        ERROR_MESSAGE="ERROR: Pokémon '$POKEMON' not found (404) at $CURRENT_URL"
+        echo "$ERROR_MESSAGE" | tee -a "$ERROR_FILE"
+    
+    else
+        ERROR_MESSAGE="ERROR: Request failed for '$POKEMON' → HTTP $HTTP_CODE"
+        echo "$(date '+%Y-%m-%d %H:%M:%S') | $ERROR_MESSAGE" | tee -a "$ERROR_FILE"
+    fi
+
+    # Don't sleep after the very last Pokémon
+    if [ "$POKEMON" != "${POKEMON_LIST[-1]}" ]; then
+        echo "→ Waiting ${REQUEST_DELAY} second(s) to be nice to the API..."
+        sleep "$REQUEST_DELAY"
+    fi
+
+    echo
+done
+
+echo "Finished processing all Pokémon!"
+echo "Check '$ERROR_FILE' if any errors occurred."

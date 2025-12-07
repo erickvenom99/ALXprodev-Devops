@@ -1,0 +1,54 @@
+#!/bin/bash
+
+# Define the list of Pokémon to fetch
+POKEMON_LIST=("Bulbasaur" "Ivysaur" "Venusaur" "Charmander" "Charmeleon")
+BASE_API_URL="https://pokeapi.co/api/v2/pokemon/"
+
+echo "Starting parallel data retrieval for ${#POKEMON_LIST[@]} Pokémon..."
+echo "---"
+
+# --- Function to fetch data for a single Pokémon ---
+# Runs in the background for parallel execution.
+fetch_pokemon() {
+    local POKEMON_NAME="$1"
+    local LOWER_POKEMON=$(echo "$POKEMON_NAME" | tr '[:upper:]' '[:lower:]')
+    local CURRENT_URL="${BASE_API_URL}${LOWER_POKEMON}"
+    local OUTPUT_FILE="${LOWER_POKEMON}.json"
+
+    echo "[JOB STARTED] Fetching data for $POKEMON_NAME..."
+
+    # Use curl to fetch data and capture HTTP status code
+    HTTP_RESPONSE=$(curl -sS -w "%{http_code}" "$CURRENT_URL")
+    HTTP_CODE="${HTTP_RESPONSE: -3}"
+    JSON_BODY="${HTTP_RESPONSE: 0:-3}"
+
+    if [ "$HTTP_CODE" -eq 200 ]; then
+        echo "$JSON_BODY" > "$OUTPUT_FILE"
+        echo "[JOB SUCCESS] $POKEMON_NAME data saved to $OUTPUT_FILE (HTTP $HTTP_CODE)"
+    else
+        echo "[JOB FAILED] Could not retrieve data for $POKEMON_NAME. HTTP Code: $HTTP_CODE"
+        return 1 # Return a non-zero exit code to indicate failure
+    fi
+}
+
+# --- Main Execution ---
+
+# Loop through the list and launch each function call in the background
+for POKEMON in "${POKEMON_LIST[@]}"; do
+    fetch_pokemon "$POKEMON" & # The '&' sends the function to the background
+done
+
+# The script now hits this point while all fetch_pokemon functions are running simultaneously.
+
+# Process Management: Wait for all background jobs to complete.
+echo "---"
+echo "All fetch jobs have been launched. Waiting for completion..."
+
+# The 'wait' command blocks the script until all child processes launched
+# in the background (using '&') are finished.
+wait
+
+# Final confirmation
+echo "---"
+echo "✅ All parallel processes completed successfully."
+echo "Check your directory for the generated JSON files."

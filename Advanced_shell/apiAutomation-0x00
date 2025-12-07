@@ -1,0 +1,14 @@
+#!/bin/bash
+
+URL="https://pokeapi.co/api/v2/pokemon/25/"
+PIKACHU="data.json"
+ERROR_FILE="error.txt"
+
+if curl -s -f "$URL" -o "$PIKACHU"; then
+    echo "Successfully retrieved data from $URL"
+    echo "Data saved in $PIKACHU"
+else
+    echo "[$(date)] Error: Failed to retrieve data from Pokémon API (Pikachu)." >> "$ERROR_FILE"
+    echo "Failed to retrieve data from $URL"
+    echo "Check $ERROR_FILE for details"
+fi
