@@ -5,14 +5,14 @@
 # generates a clean CSV report and a final summary to standard output.
 
 # Define the output file names
-CSV_FILE="pokemon.csv" # Changed to match your file name
+CSV_FILE="pokemon.csv" 
 TEMP_FILE=$(mktemp) 
+UNCAP_CSV_FILE=$(mktemp) # New temporary file for uncapitalized CSV output
 
 # List all JSON files generated in Task 2.
 JSON_FILES=(*.json)
 
 # --- Error Check: Ensure files exist ---
-# FIX: Added required space before ]
 if [ "${#JSON_FILES[@]}" -eq 0 ]; then
     echo "Error: No json files found" >&2
     exit 1
@@ -21,58 +21,56 @@ fi
 echo "Generating csv report..."
 
 # --- 1. Extraction (jq) and Data Pipelining ---
-# FIX: Added quotes around $TEMP_FILE for safety
+# Extracts lowercase name, height (dm), and weight (hg)
 jq -r '"\(.name) \(.height) \(.weight)"' "${JSON_FILES[@]}" > "$TEMP_FILE"
 
 # --- 2. Processing, Calculation, and Reporting (awk) ---
-# awk reads the space-separated data from the temporary file.
-# We capture awk's calculated summary output into the SUMMARY variable.
-SUMMARY=$(awk -v csv_output="$CSV_FILE" '
+# awk now focuses ONLY on calculations and conversions, printing uncapitalized CSV.
+SUMMARY=$(awk -v csv_output="$UNCAP_CSV_FILE" '
 # BEGIN block runs once before processing any lines
 BEGIN {
-	# NOTE: Adjusted header spacing for cleaner output
-	print "Name,Height (m),Weight (kg)" > csv_output;
-	total_height = 0;
-	total_weight = 0;
+    # Note: We skip the header here; sed will add it later when we merge.
+    total_height = 0;
+    total_weight = 0;
 }
 {
-	# $1=name (lowercase), $2=height (dm), $3=weight (hg)
-	
-	# Convert height from decimeters (dm) to meters (m): divide by 10
-	height_m = $2 / 10;
-	
-	# Convert weight from hectograms (hg) to kilograms (kg): divide by 10
-	weight_kg = $3 / 10;
+    # $1=name (lowercase), $2=height (dm), $3=weight (hg)
+    
+    # Convert height from decimeters (dm) to meters (m)
+    height_m = $2 / 10;
+    
+    # Convert weight from hectograms (hg) to kilograms (kg)
+    weight_kg = $3 / 10;
 
-	total_height += height_m;
-	total_weight += weight_kg;
-	
-	# Capitalize the first letter and keep the rest as is (since JSON input is lowercase)
-	caps_name = toupper(substr($1,1,1)) substr($1, 2);
-
-	#---CSV Output---
-	# NOTE: Adjusted format string spacing
-	printf "%s,%.1f,%.1f\n", caps_name, height_m, weight_kg >> csv_output;
+    total_height += height_m;
+    total_weight += weight_kg;
+    
+    #---CSV Output (Uncapitalized)---
+    # Name is printed lowercase ($1)
+    printf "%s,%.1f,%.1f\n", $1, height_m, weight_kg >> csv_output;
 }
-# FIX: Corrected END block syntax from END o to END { ... }
 END {
-	# FIX: Corrected typo from num_pokemnn to num_pokemon
-	num_pokemon = NR;
+    num_pokemon = NR;
 
-	# Calculate Average
-	# FIX: Corrected typo from num_pokeman to num_pokemon
-	avg_height = total_height / num_pokemon;
-	avg_weight = total_weight / num_pokemon;
-	
-	# Report summary: Print ONLY the averages to standard output (captured by SUMMARY variable)
-	printf "Average Height: %.2f m\n", avg_height;
+    # Calculate Average
+    avg_height = total_height / num_pokemon;
+    avg_weight = total_weight / num_pokemon;
+    
+    # Report summary: Print ONLY the averages to standard output (captured by SUMMARY variable)
+    printf "Average Height: %.2f m\n", avg_height;
     printf "Average Weight: %.2f kg\n", avg_weight;
 
 }
-# FIX: Added closing single quote for the awk script
 ' "$TEMP_FILE")
 
-# --- 3. Shell Report Generation (Matches Sample Output Structure) ---
+# --- 3. Shell Report Generation and sed Capitalization ---
+
+# Add the Header and capitalize the names using sed
+echo "Name,Height (m),Weight (kg)" > "$CSV_FILE"
+# The 's' command substitutes the first character (.). 
+# The '\u' makes the next character uppercase. 
+# The '&' is the character we matched (the first character).
+cat "$UNCAP_CSV_FILE" | sed 's/\(.\)/\u&/' >> "$CSV_FILE" 
 
 # Print the CSV file path first
 echo "\nCSV Report generated at: $CSV_FILE"
@@ -82,8 +80,8 @@ echo ""
 cat "$CSV_FILE"
 
 # Print the calculated averages captured from awk
-echo "" # Add a blank line for spacing
+echo "" 
 echo "$SUMMARY"
 
 # --- 4. Cleanup ---
-rm "$TEMP_FILE"
+rm "$TEMP_FILE" "$UNCAP_CSV_FILE"
