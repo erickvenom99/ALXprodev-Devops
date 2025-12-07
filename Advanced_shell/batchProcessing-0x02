@@ -1,7 +1,7 @@
 #!/bin/bash
 
-POKEMON_LIST=(Bulbasaur Ivysaur Venusaur Charmander Charmeleon)
-BASE_API_URL="https://pokeapi.co/api/v2/pokemon/"
+POKEMON_LIST=(bulbasaur ivysaur venusaur charmander charmeleon)
+BASE_API_URL="https://pokeapi.co/api/v2/pokemon1/"
 ERROR_FILE="errors.txt"
 REQUEST_DELAY=1
 

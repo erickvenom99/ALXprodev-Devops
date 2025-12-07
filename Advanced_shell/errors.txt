@@ -1,1 +1,6 @@
 [Sun Dec  7 05:40:33 GMT 2025] Error: Failed to retrieve data from Pokémon API (Pikachu).
+2025-12-07 06:45:34 | ERROR: Request failed for 'bulbasaur' → HTTP 400
+2025-12-07 06:45:38 | ERROR: Request failed for 'ivysaur' → HTTP 400
+2025-12-07 06:45:41 | ERROR: Request failed for 'venusaur' → HTTP 400
+2025-12-07 06:45:44 | ERROR: Request failed for 'charmander' → HTTP 400
+2025-12-07 06:45:46 | ERROR: Request failed for 'charmeleon' → HTTP 400
