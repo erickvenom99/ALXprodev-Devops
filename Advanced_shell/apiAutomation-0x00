@@ -2,7 +2,7 @@
 
 URL="https://pokeapi.co/api/v2/pokemon/25/"
 PIKACHU="data.json"
-ERROR_FILE="error.txt"
+ERROR_FILE="errors.txt"
 
 if curl -s -f "$URL" -o "$PIKACHU"; then
     echo "Successfully retrieved data from $URL"
